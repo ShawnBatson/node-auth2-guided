@@ -1,21 +1,34 @@
+const jwt = require("jsonwebtoken");
+
 function restrict() {
-	return async (req, res, next) => {
-		const authError = {
-			message: "Invalid credentials",
-		}
+    return async (req, res, next) => {
+        const authError = {
+            message: "Invalid credentials",
+        };
+        try {
+            const token = req.headers.authorization;
+            if (!token) {
+                return res.status(401).json(authError);
+            }
 
-		try {
-			// express-session will automatically get the session ID from the cookie
-			// header, and check to make sure it's valid and the session for this user exists.
-			if (!req.session || !req.session.user) {
-				return res.status(401).json(authError)
-			}
-
-			next()
-		} catch(err) {
-			next(err)
-		}
-	}
+            jwt.verify(token, process.env.JWT_SECRET, (err, decodedPayload) => {
+                if (err) {
+                    return res.status(401).json(authError);
+                }
+                req.token = decodedPayLoad; //this is in case you need to call it elsehwhere
+                next();
+            });
+        } catch (err) {
+            next(err);
+        }
+    };
 }
 
-module.exports = restrict
+// express-session will automatically get the session ID from the cookie
+// header, and check to make sure it's valid and the session for this user exists.
+
+// if (!req.session || !req.session.user) {
+// 	return res.status(401).json(authError)
+// }
+
+module.exports = restrict;
