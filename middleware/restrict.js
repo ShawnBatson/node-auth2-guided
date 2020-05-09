@@ -1,21 +1,21 @@
 const jwt = require("jsonwebtoken");
 
-function restrict() {
+function restrict(role = "normal") {
     return async (req, res, next) => {
         const authError = {
             message: "Invalid credentials",
         };
         try {
-            const token = req.headers.authorization;
+            const token = req.cookies.token;
             if (!token) {
                 return res.status(401).json(authError);
             }
 
             jwt.verify(token, process.env.JWT_SECRET, (err, decodedPayload) => {
-                if (err) {
+                if (err || decodedPayload.userRole !== role) {
                     return res.status(401).json(authError);
                 }
-                req.token = decodedPayLoad; //this is in case you need to call it elsehwhere
+                req.token = decodedPayload; //this is in case you need to call it elsehwhere
                 next();
             });
         } catch (err) {
